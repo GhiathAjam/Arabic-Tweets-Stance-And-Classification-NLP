@@ -1,0 +1,3 @@
+nltk
+Arabic-Stopwords
+camel_tools 
