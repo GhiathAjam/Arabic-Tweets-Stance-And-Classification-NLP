@@ -1,3 +1,3 @@
 nltk
 Arabic-Stopwords
-camel_tools 
+camel-tools 
