@@ -4,6 +4,8 @@ import camel_tools.utils.dediac as camel_utils_dediac
 import camel_tools.utils.normalize as camel_utils_normalize
 import camel_tools.tokenizers.word as camel_utils_tokenizer
 from camel_tools.disambig.mle import MLEDisambiguator
+from utils import UNICODE_EMO
+
 # from camel_tools.morphology.analyzer import Analyzer
 # from camel_tools.morphology.database import MorphologyDB
 
@@ -19,18 +21,18 @@ import arabicstopwords.arabicstopwords as stp
 class Preprocess:
 
     HASH_FREQ = 3
-    mle = MLEDisambiguator.pretrained()
-
+    # mle = MLEDisambiguator.pretrained()
+    
     nltk_arb_stopwords = set(nltk.corpus.stopwords.words("arabic"))
     arabicstopwords = set(stp.stopwords_list())
 
     STOPWORDS = arabicstopwords
 
-    # def __init__(self, HASH_FREQ = 3) -> None:
-    #     self.HASH_FREQ = HASH_FREQ
-    #     self.mle = MLEDisambiguator.pretrained()
-    #     self.STOPWORDS = self.arabicstopwords
-    #     pass
+    def __init__(self, INCLUDE_EMOJIS=False, HASH_FREQ = 3) -> None:
+        self.INCLUDE_EMOJIS=INCLUDE_EMOJIS
+        self.HASH_FREQ = HASH_FREQ
+        # self.mle = MLEDisambiguator.pretrained()
+        self.STOPWORDS = self.arabicstopwords
 
     # string -> dediacritized string
     # print(dediac("ميسبت"));
@@ -51,6 +53,19 @@ class Preprocess:
         ret = re.sub(r'@\S+', ' <Mt> ', ret)
         ret = re.sub('<LF>', ' <LF> ', ret)
         return ret
+
+    def convert_emojis_to_meaning(self, text):
+        # emojis unicode are '\U000[0-9A-F]{5}'
+        # emojis = re.findall(r'\\U000[0-9A-F]{5}', text)
+        for emot in UNICODE_EMO:
+            # map the emoji unicode into its english word
+            # remove : , from the english word
+            # the emoji word is represented as a single token even if it consists of multiple words
+            # i.e 🌹 "red_flower" not "red flower"
+            # add space before and after the emoji word, since usually emojis are written close to each other without spaces.
+            # i.e. want 🔥🔥🔥 -> "fire fire fire" not "firefirefire"
+            text = re.sub(r'('+emot+')', " " +UNICODE_EMO[emot]+" ", text)
+        return text
 
     # string -> remove punctuation
     def remove_punctuation(self, text):
@@ -133,7 +148,10 @@ class Preprocess:
         return ret
 
     def do_all(self, text):
-        return self.remove_stopwords(self.lemmatize(self.tokenizer(self.normalize(self.remove_punctuation(self.tokens(self.dediac(text)))))))
+        if self.INCLUDE_EMOJIS:
+            return self.remove_stopwords(self.lemmatize(self.tokenizer(self.normalize(self.remove_punctuation(self.convert_emojis_to_meaning(self.tokens(self.dediac(text))))))))
+        else:
+            return self.remove_stopwords(self.lemmatize(self.tokenizer(self.normalize(self.remove_punctuation(self.tokens(self.dediac(text)))))))
 
 
 p = Preprocess()
