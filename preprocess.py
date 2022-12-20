@@ -9,6 +9,9 @@ from utils import UNICODE_EMO
 # from camel_tools.morphology.analyzer import Analyzer
 # from camel_tools.morphology.database import MorphologyDB
 
+# from farasa.segmenter import FarasaSegmenter
+# from farasa.stemmer import FarasaStemmer
+
 import nltk
 import arabicstopwords.arabicstopwords as stp
 
@@ -20,19 +23,21 @@ import arabicstopwords.arabicstopwords as stp
 
 class Preprocess:
 
-    HASH_FREQ = 3
-    # mle = MLEDisambiguator.pretrained()
-    
+    # farasa_seg = FarasaSegmenter(interactive=True)
+    # farasa_stm = FarasaStemmer(interactive=True)
+
     nltk_arb_stopwords = set(nltk.corpus.stopwords.words("arabic"))
     arabicstopwords = set(stp.stopwords_list())
 
-    STOPWORDS = arabicstopwords
-
-    def __init__(self, INCLUDE_EMOJIS=False, HASH_FREQ = 3) -> None:
-        self.INCLUDE_EMOJIS=INCLUDE_EMOJIS
+    def __init__(self, INCLUDE_EMOJIS=True, HASH_FREQ = 3, LEMMATIZOR = 'camel') -> None:
+        print("Emojis: ", INCLUDE_EMOJIS)
+        print("Lemmatizor: ", LEMMATIZOR)
+        self.INCLUDE_EMOJIS = INCLUDE_EMOJIS
+        self.LEMMATIZOR = LEMMATIZOR
         self.HASH_FREQ = HASH_FREQ
-        # self.mle = MLEDisambiguator.pretrained()
-        self.STOPWORDS = self.arabicstopwords
+        self.mle = MLEDisambiguator.pretrained()
+        # This is done on tokens, remove empty tokens
+        self.STOPWORDS = self.arabicstopwords.union(['', ' '])
 
     # string -> dediacritized string
     # print(dediac("ميسبت"));
@@ -50,22 +55,21 @@ class Preprocess:
         # add extra space to avoid joining words
         ret = re.sub(r'http\S+', ' <LINK> ', ret)
         ret = re.sub(r'\d+', ' <NUM> ', ret)
-        ret = re.sub(r'@\S+', ' <Mt> ', ret)
+        ret = re.sub(r'\S*@\S*', ' <Mt> ', ret)
         ret = re.sub('<LF>', ' <LF> ', ret)
         return ret
 
     def convert_emojis_to_meaning(self, text):
         # emojis unicode are '\U000[0-9A-F]{5}'
         # emojis = re.findall(r'\\U000[0-9A-F]{5}', text)
-        for emot in UNICODE_EMO:
-            # map the emoji unicode into its english word
-            # remove : , from the english word
-            # the emoji word is represented as a single token even if it consists of multiple words
-            # i.e 🌹 "red_flower" not "red flower"
-            # add space before and after the emoji word, since usually emojis are written close to each other without spaces.
-            # i.e. want 🔥🔥🔥 -> "fire fire fire" not "firefirefire"
-            text = re.sub(r'('+emot+')', " " +UNICODE_EMO[emot]+" ", text)
-        return text
+        #
+        # map the emoji unicode into its english word
+        # remove : , from the english word
+        # the emoji word is represented as a single token even if it consists of multiple words
+        # i.e 🌹 "red_flower" not "red flower"
+        # add space before and after the emoji word, since usually emojis are written close to each other without spaces.
+        # i.e. want 🔥🔥🔥 -> "fire fire fire" not "firefirefire"
+        return "".join([' <'+UNICODE_EMO[c]+'> ' if c in UNICODE_EMO else c for c in text])
 
     # string -> remove punctuation
     def remove_punctuation(self, text):
@@ -122,39 +126,57 @@ class Preprocess:
         return ret
 
     def camel_lemmatize(self, tokenized_text):
-        # disambig = self.mle.disambiguate(tokenized_text)
-        # lemmas = [d.analyses[0].analysis['lex'] for d in disambig]
-        # return lemmas
-        return tokenized_text
+        disambig = self.mle.disambiguate(tokenized_text)
+        lemmas = [d.analyses[0].analysis['lex'] for d in disambig]
+        return lemmas
 
-    def frasa_lemmatize(self, tokenized_text):
-        return tokenized_text
+    # Farasapy is bad
+    # This doesn't give same result as their API!
+    def farasapy_lemmatize(self, text):
+        ret = self.farasa_stm.stem(text)
+        return self.tokenizer(ret)
 
-    # Lemmatization
-    def lemmatize(self, tokenized_text):
-        # Camel
-        cl = self.camel_lemmatize(tokenized_text)
-        # Frasa
-        fr = self.frasa_lemmatize(tokenized_text)
-        
-        # print(tokenized_text)
-        # print("Camel: ", cl)
-        # print("Frasa: ", fr)
-        return tokenized_text
+    def lemmatize(self, text, method='camel'):
+        if method == 'camel':
+            return self.camel_lemmatize(text)
+        elif method == 'farasapy':
+            return self.farasapy_lemmatize(text)
+        else:
+            raise Exception('Invalid method')
 
     # After lemmas?
     def remove_stopwords(self, tokenized_text):
         ret = [tk for tk in tokenized_text if tk not in self.STOPWORDS]
         return ret
 
+    # do:
+    #    1. dediac
+    #    2. replace links, numbers, mentions
+    #    3. convert emojis to meaning
+    #    4. remove punctuation
+    #    5. normalize
+    #    6. tokenize & lemmatize
+    #    7. remove stopwords
     def do_all(self, text):
         if self.INCLUDE_EMOJIS:
-            return self.remove_stopwords(self.lemmatize(self.tokenizer(self.normalize(self.remove_punctuation(self.convert_emojis_to_meaning(self.tokens(self.dediac(text))))))))
+            ret = self.normalize(self.remove_punctuation(self.convert_emojis_to_meaning(self.tokens(self.dediac(text)))))
         else:
-            return self.remove_stopwords(self.lemmatize(self.tokenizer(self.normalize(self.remove_punctuation(self.tokens(self.dediac(text)))))))
+            ret = self.normalize(self.remove_punctuation(self.tokens(self.dediac(text))))
+        #
+        if self.LEMMATIZOR == 'camel':
+            return self.remove_stopwords(self.camel_lemmatize(self.tokenizer(ret)))
+        elif self.LEMMATIZOR == 'farasapy':
+            return self.remove_stopwords(self.farasapy_lemmatize(ret))
+        else:
+            raise Exception('Invalid lemmatizor')
 
+# open file
 
-p = Preprocess()
+# p = Preprocess(INCLUDE_EMOJIS=True)
+
+# f = open("output.txt", "w")
+# print("NATIVE:", p.farasapy_lemmatize('يُشار إلى أن اللغة العربية يتحدثها أكثر من 422 مليون نسمة ويتوزع متحدثوها في المنطقة المعروفة باسم الوطن العربي بالإضافة إلى العديد من المناطق الأخرى المجاورة مثل الأهواز وتركيا وتشاد والسنغال وإريتريا وغيرها. وهي اللغة الرابعة من لغات منظمة الأمم المتحدة الرسمية الست.'), file=f)
+# print("ALL: ", p.do_all('يُشار إلى أن اللغة العربية يتحدثها أكثر من 422 مليون نسمة ويتوزع متحدثوها في المنطقة المعروفة باسم الوطن العربي بالإضافة إلى العديد من المناطق الأخرى المجاورة مثل الأهواز وتركيا وتشاد والسنغال وإريتريا وغيرها. وهي اللغة الرابعة من لغات منظمة الأمم المتحدة الرسمية الست.'), file=f)
 
 # print(camel_utils_normalize.normalize_unicode('ميسبت'))
 
@@ -162,4 +184,9 @@ p = Preprocess()
 
 # print(p.do_all('''بيل غيتس يتلقى لقاح #كوفيد19 من غير تصوير الابرة و لا السيرنجة و لا الدواء و لابس بولو صيفي في عز الشتاء و يقول ان إحدى مزايا عمر ال 65 عامًا هي انه مؤهل للحصول على اللقاح ... يعنى ما كان يحتاج اللقاح لو كان عمره اصغر من 65 🤔 https://t.co/QQKFFUNwBn,celebrity,1وزير الصحة لحد اليوم وتحديدا هلأ بمؤتمروا الصحفي كان ما عندي مشكلة معوا.<LF>بس انوا بفايزر هو اللقاح الوحيد الآمن بالعالم لأ حبيبي هاي فيها نفاق واضح.<LF>عفوا يعني.<LF>مش إنوا مجبورين فيه وما قادر تجبر الدولة المارقة تدفع مصاري تجيب لقاح تاني.<LF>يلا باي,info_news,1قولكن  رح يكونو اد المسؤولية ب لبنان لما يوصل اللقاح؟<LF>ألفي جرعة من لقاح #كورونا للتلف في مستشفى بوسطن،لأن عامل النظافة وقف عن طريق الخطأ عمل الثلاجة التي حفظت بها.<LF>#لقاح_كورونا,info_news,1'''))
 
-# print(p.do_all('''مات 23 شخص في النرويج بعد تلقي لقاح  #COVID19..<LF>نيويورك بوست 🤦 https://t.co/g51cmWeoVL,info_news,-1'''))
+# print(p.do_all('''مات 23 شخص في النرويج بعد تلقي لقاح  #COVID19..<LF>نيويورك بوست 🤦 https://t.co/g51cmWeoVL,info_news,-1''', lemmatizor='farasapy'))
+# print(p.do_all('''مات 23 شخص في النرويج بعد تلقي لقاح  #COVID19..<LF>نيويورك بوست 🤦 https://t.co/g51cmWeoVL,info_news,-1''', lemmatizor='camel'))
+
+# print(p.convert_emojis_to_meaning("😂😶😶🤔❤👍🏻😁"));
+# print("empty test");
+

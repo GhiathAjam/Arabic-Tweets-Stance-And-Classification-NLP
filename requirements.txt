@@ -1,3 +1,7 @@
 nltk
 Arabic-Stopwords
-camel-tools
+camel-tools 
+farasapy
+arabert
+pandas
+scikit-learn
