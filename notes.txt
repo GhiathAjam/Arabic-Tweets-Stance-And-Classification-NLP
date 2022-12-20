@@ -1,0 +1,33 @@
+Preprocessing Combinations:
+
+  English Text:
+    - Keep as is
+    - "NER":  convert to <Place>, <Celeb>, <Org>, <Event>, <Work>, <Product>, ...
+    - "NER":  In Arabic
+
+  Emojis:
+    - remove (so model wont be too dependent on them)
+    - convert to meanings: <smiling_face>, <red_heart>, ...
+    - convert to Arabic meanings: <وجه_مبتسم>, <قلب_أحمر>, ...
+
+  Numbers:
+    - keep as is
+    - remove
+    - convert to <NUM>
+
+  HashTags:
+    - remove
+    - repeat hashtagged words multiple times (and split them!)
+
+  Lemmatization:
+    - camel tools -> decent performance
+    - farasapy    -> bad performance
+    - ...
+
+  StopWords:
+    - NLTK                ->  nltk_arb_stopwords = set(nltk.corpus.stopwords.words("arabic"))
+    - Arabicstopwords lib -> import arabicstopwords.arabicstopwords as stp;  arabicstopwords = set(stp.stopwords_list())
+
+  Mentions:
+    - remove
+    - replace with <Mt>
