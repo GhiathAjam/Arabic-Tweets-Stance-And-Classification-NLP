@@ -1,9 +1,11 @@
 import pandas as pd
+import numpy as np
+from sklearn.decomposition import PCA
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import CountVectorizer
 
 
-def TFIDF(documents):
+def TFIDF(train_documents,test_documents):
     '''
     inputs:
         documents: this is a list of documents where each document is a list of preprcessed tokens
@@ -14,12 +16,13 @@ def TFIDF(documents):
                   which is the tfidf of this document  for each word in the vocabulary.
     '''
     vectorizer =TfidfVectorizer(analyzer=lambda x: x)
-    vectors= vectorizer.fit_transform(documents)
-    features=vectors.todense()
-    return features
+    train_features= vectorizer.fit_transform(train_documents)
+    test_features=vectorizer.transform(raw_documents=test_documents)
+    return train_features.toarray(), test_features.toarray()
+    
 
 
-def BOW(documents):
+def BOW(train_documents,test_documents):
     '''
     inputs:
         documents: this is a list of documents where each document is a a list of preprcessed tokens
@@ -33,12 +36,24 @@ def BOW(documents):
     # convert it into matrix representation 
     # where each cell will be filled by the frequency of each vocab
     vectorizer = CountVectorizer(analyzer=lambda x: x)
-    bow_model = vectorizer.fit_transform(documents)
-    return bow_model.toarray()
+    train_features = vectorizer.fit_transform(train_documents)
+    test_features=vectorizer.transform(raw_documents=test_documents)
+    return train_features.toarray(), test_features.toarray()
+
+
+
+# def applyPCA(X,n_components=100):
+#     X_copy=X.copy()
+#     pca=PCA(n_components=n_components)
+#     X_copy=pca.fit_transform(X_copy)
+#     return X_copy
 
 
 # Just a demmo test
 doca ='انا طالبه  في هندسة'.split()
 docb= 'انا سعيدة جدا'.split()
-print(TFIDF([doca,docb]))
-print(BOW([doca,docb]))
+docc='انا هاله'.split()
+
+# print(TFIDF([doca,docb],[docc]))
+# print(BOW([doca,docb],[docc]))
+
