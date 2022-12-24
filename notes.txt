@@ -1,6 +1,7 @@
 Preprocessing Combinations:
 
   English Text:
+    - make all lower!!
     - Keep as is
     - "NER":  convert to <Place>, <Celeb>, <Org>, <Event>, <Work>, <Product>, ...
     - "NER":  In Arabic
@@ -25,6 +26,7 @@ Preprocessing Combinations:
     - ...
 
   StopWords:
+    - Remove Tokens with num_letters < 3 ?
     - NLTK                ->  nltk_arb_stopwords = set(nltk.corpus.stopwords.words("arabic"))
     - Arabicstopwords lib -> import arabicstopwords.arabicstopwords as stp;  arabicstopwords = set(stp.stopwords_list())
 

@@ -29,14 +29,14 @@ class Preprocess:
     nltk_arb_stopwords = set(nltk.corpus.stopwords.words("arabic"))
     arabicstopwords = set(stp.stopwords_list())
 
-    def __init__(self, INCLUDE_EMOJIS=True, HASH_FREQ = 3, LEMMATIZOR = 'camel') -> None:
+    def __init__(self, INCLUDE_EMOJIS=True, HASH_FREQ=2, LEMMATIZOR='camel') -> None:
         print("Emojis: ", INCLUDE_EMOJIS)
         print("Lemmatizor: ", LEMMATIZOR)
         self.INCLUDE_EMOJIS = INCLUDE_EMOJIS
         self.LEMMATIZOR = LEMMATIZOR
         self.HASH_FREQ = HASH_FREQ
         self.mle = MLEDisambiguator.pretrained()
-        # This is done on tokens, remove empty tokens
+        # Empty tokens as stop words
         self.STOPWORDS = self.arabicstopwords.union(['', ' '])
 
     # string -> dediacritized string
@@ -75,14 +75,18 @@ class Preprocess:
     def remove_punctuation(self, text):
         punc = '''!()-[]{};:'"\,<>./?@#$%^&*_~''' + '''`÷×؛<>_()*&^%][ـ،/:"؟.,'{}~¦+|!”…“–ـ«»'''
         punc += '''⁉'''
-        # keep HashTags ?
-        punc = punc.replace('#', '')
-        punc = punc.replace('_', '')
+
+        # keep HashTags 
+        hashtags = re.findall(r'#\S+', text)
+        text = re.sub(r'#\S+', '', text)
         # keep tokens: <...>
-        punc = punc.replace('<', '')
-        punc = punc.replace('>', '')
+        tokens = re.findall(r'<\S+>', text)
+        text = re.sub(r'<\S+>', '', text)
+
         # replace punc with space
-        return text.translate(str.maketrans(punc, ' ' * len(punc)))
+        text = text.translate(str.maketrans(punc, ' ' * len(punc)))
+        # re-add tokens
+        return text +' '.join(tokens) +' '.join(hashtags)
 
     # replacing: أ إ آ with ا
     # replacing: ة with ه
@@ -146,7 +150,7 @@ class Preprocess:
 
     # After lemmas?
     def remove_stopwords(self, tokenized_text):
-        ret = [tk for tk in tokenized_text if tk not in self.STOPWORDS]
+        ret = [tk for tk in tokenized_text if self.dediac(tk) not in self.STOPWORDS]
         return ret
 
     # do:
@@ -163,6 +167,7 @@ class Preprocess:
         else:
             ret = self.normalize(self.remove_punctuation(self.tokens(self.dediac(text))))
         #
+        # print('tokens:', ret)
         if self.LEMMATIZOR == 'camel':
             return self.remove_stopwords(self.camel_lemmatize(self.tokenizer(ret)))
         elif self.LEMMATIZOR == 'farasapy':
@@ -172,7 +177,20 @@ class Preprocess:
 
 # open file
 
-# p = Preprocess(INCLUDE_EMOJIS=True)
+# p = Preprocess()
+# x = '''
+# لقاح #فايزر/بيونتيك https://t.co/LHlDwaLhby,info_news,1
+
+# train   خبراء صحة صينيون يدعون إلى تعليق استخدام لقاح فايزر/بيونتيك"" و""موديرنا""",info_news,1
+
+# خبر جيد عن فعاليه لقاح فايزر/بيونتيك ضد التحولات الجينيه الجديده التي حدثت لفيروس كورونا وجعلته اكثر قدره على الانتشار وخصوصا الطفره الجديده التي تم رصدها والتي تغير اجزاء من البروتين الشوكي. <LF> https://t.co/cYcEAfcNp5,info_news,1
+
+# بعد وفيات النرويج.. خبراء صحة صينيون يدعون إلى تعليق استخدام لقاح “فايزر/بيونتيك” و”موديرنا” https://t.co/9whK0H6dTQ,info_news,-1
+
+# ثاني لقاح يحصل على ترخيص من وكالة الأدوية الأوروبية، بعد السماح باستخدام لقاح فايزر/بيونتيك في دول الاتحاد الـ27 https://t.co/EID7q81aMx #العربية,info_news,1"""
+# '''
+# x = 'تساؤلات آخر ليل <LF>اذا ما كفانا لقاح الكورونا ...بزيدولو مي ؟؟ 😅<LF>#هبل'
+# print(p.do_all(x))
 
 # f = open("output.txt", "w")
 # print("NATIVE:", p.farasapy_lemmatize('يُشار إلى أن اللغة العربية يتحدثها أكثر من 422 مليون نسمة ويتوزع متحدثوها في المنطقة المعروفة باسم الوطن العربي بالإضافة إلى العديد من المناطق الأخرى المجاورة مثل الأهواز وتركيا وتشاد والسنغال وإريتريا وغيرها. وهي اللغة الرابعة من لغات منظمة الأمم المتحدة الرسمية الست.'), file=f)

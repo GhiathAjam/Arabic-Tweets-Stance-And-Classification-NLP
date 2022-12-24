@@ -126,4 +126,3 @@ docc='انا هاله'.split()
 # print(CBOW( [doca,docb],[docc]))
 # print(TFIDF([doca,docb],[docc]))
 # print(BOW([doca,docb],[docc]))
-
