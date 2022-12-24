@@ -56,4 +56,3 @@ docc='انا هاله'.split()
 
 # print(TFIDF([doca,docb],[docc]))
 # print(BOW([doca,docb],[docc]))
-
