@@ -91,8 +91,8 @@ def SG(train_documents,test_documents):
     '''
     # create skip-gram model (SG) 
     # vector_size should be tuned according to the size of the vocabulary we have, could be 100 for the normal dataset
-    vectorizer_train = Word2Vec(train_documents, min_count = 1, vector_size = 300, window = 5, sg=1)
-    vectorizer_test = Word2Vec(test_documents, min_count = 1, vector_size = 300, window = 5, sg=1)
+    vectorizer_train = Word2Vec(train_documents, min_count = 1, vector_size = 700, window = 3, sg=1)
+    vectorizer_test = Word2Vec(test_documents, min_count = 1, vector_size = 700, window = 3, sg=1)
     # append the vectors of all sentences to a list
     vectors_sg_train = []
     # get the vector of all sentences 
