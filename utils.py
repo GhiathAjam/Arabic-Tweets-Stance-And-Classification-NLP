@@ -1,3 +1,24 @@
+# Map classes to numbers
+stance_classes_reverse = {
+                 -1: 'Negative',
+                  0: 'Neutral',
+                  1:'Positive'}
+
+stance_classes = {'Neutral': 0,
+                  'Positive': 1,
+                    'Negative': 2,
+                    }
+
+category_classes = {'info_news': 1, 
+                    'celebrity': 2,
+                    'plan': 3,
+                    'requests': 4,
+                    'rumors': 5,
+                    'advice': 6,
+                    'restrictions': 7,
+                    'personal': 8,
+                    'unrelated': 9,
+                    'others': 10}
 EMO_UNICODE = {
     u':1st_place_medal:': u'\U0001F947',
     u':2nd_place_medal:': u'\U0001F948',

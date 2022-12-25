@@ -9,8 +9,10 @@ from utils import UNICODE_EMO
 # from camel_tools.morphology.analyzer import Analyzer
 # from camel_tools.morphology.database import MorphologyDB
 
-# from farasa.segmenter import FarasaSegmenter
-# from farasa.stemmer import FarasaStemmer
+from farasa.segmenter import FarasaSegmenter
+from farasa.stemmer import FarasaStemmer
+
+from nltk.stem.isri import ISRIStemmer
 
 import nltk
 import arabicstopwords.arabicstopwords as stp
@@ -19,17 +21,16 @@ import arabicstopwords.arabicstopwords as stp
 # <LINK> <NUM> <Mt> <LF> for links, numbers, mentions, line feed
 # ENGLISH Text is kept as is
 # HASHTAGS are repeated 3 times
-# TODO: Emojis
 
 class Preprocess:
 
-    # farasa_seg = FarasaSegmenter(interactive=True)
-    # farasa_stm = FarasaStemmer(interactive=True)
+    farasa_seg = FarasaSegmenter(interactive=True)
+    farasa_stm = FarasaStemmer(interactive=True)
 
     nltk_arb_stopwords = set(nltk.corpus.stopwords.words("arabic"))
     arabicstopwords = set(stp.stopwords_list())
 
-    def __init__(self, INCLUDE_EMOJIS=True, HASH_FREQ=2, LEMMATIZOR='camel') -> None:
+    def __init__(self, INCLUDE_EMOJIS=False, HASH_FREQ=5, LEMMATIZOR='farasapy') -> None:
         print("Emojis: ", INCLUDE_EMOJIS)
         print("Lemmatizor: ", LEMMATIZOR)
         self.INCLUDE_EMOJIS = INCLUDE_EMOJIS
@@ -69,7 +70,10 @@ class Preprocess:
         # i.e 🌹 "red_flower" not "red flower"
         # add space before and after the emoji word, since usually emojis are written close to each other without spaces.
         # i.e. want 🔥🔥🔥 -> "fire fire fire" not "firefirefire"
-        return "".join([' <'+UNICODE_EMO[c]+'> ' if c in UNICODE_EMO else c for c in text])
+        if self.INCLUDE_EMOJIS:
+            return "".join([' <'+UNICODE_EMO[c]+'> ' if c in UNICODE_EMO else c for c in text])
+        else:
+            return "".join([c if c not in UNICODE_EMO else ' ' for c in text])
 
     # string -> remove punctuation
     def remove_punctuation(self, text):
@@ -88,6 +92,7 @@ class Preprocess:
         # re-add tokens
         return text +' '.join(tokens) +' '.join(hashtags)
 
+    # lowercase all latin latters
     # replacing: أ إ آ with ا
     # replacing: ة with ه
     # replacing: ي with ى
@@ -97,8 +102,8 @@ class Preprocess:
         ret = camel_utils_normalize.normalize_alef_ar(ret)
         ret = camel_utils_normalize.normalize_teh_marbuta_ar(ret)
         ret = camel_utils_normalize.normalize_alef_maksura_ar(ret)
-        # replace تبسم with ت ب س م ?
-        # ret = camel_utils_normalize.normalize_unicode(ret)
+        # lowercase latins
+        ret = ret.lower()
         return ret
 
     # English words?         --> kept intact
@@ -132,21 +137,24 @@ class Preprocess:
     def camel_lemmatize(self, tokenized_text):
         disambig = self.mle.disambiguate(tokenized_text)
         lemmas = [d.analyses[0].analysis['lex'] for d in disambig]
-        return lemmas
+        return [self.dediac(l) for l in lemmas]
+
+    def nltk_lemmatize(self, tokenized_text):
+        si = ISRIStemmer()
+        return [si.stem(t) for t in tokenized_text]
 
     # Farasapy is bad
     # This doesn't give same result as their API!
     def farasapy_lemmatize(self, text):
+        # extract hashtags
+        hashtags = re.findall(r'#\S+', text)
+        text = re.sub(r'#\S+', '', text)
+        # extract < .. >
+        tokens = re.findall(r'<\S+>', text)
+        text = re.sub(r'<\S+>', '', text)
+        #
         ret = self.farasa_stm.stem(text)
-        return self.tokenizer(ret)
-
-    def lemmatize(self, text, method='camel'):
-        if method == 'camel':
-            return self.camel_lemmatize(text)
-        elif method == 'farasapy':
-            return self.farasapy_lemmatize(text)
-        else:
-            raise Exception('Invalid method')
+        return self.tokenizer(ret + ' '.join(tokens) + ' '.join(hashtags))
 
     # After lemmas?
     def remove_stopwords(self, tokenized_text):
@@ -162,35 +170,30 @@ class Preprocess:
     #    6. tokenize & lemmatize
     #    7. remove stopwords
     def do_all(self, text):
-        if self.INCLUDE_EMOJIS:
-            ret = self.normalize(self.remove_punctuation(self.convert_emojis_to_meaning(self.tokens(self.dediac(text)))))
-        else:
-            ret = self.normalize(self.remove_punctuation(self.tokens(self.dediac(text))))
         #
-        # print('tokens:', ret)
-        if self.LEMMATIZOR == 'camel':
-            return self.remove_stopwords(self.camel_lemmatize(self.tokenizer(ret)))
-        elif self.LEMMATIZOR == 'farasapy':
-            return self.remove_stopwords(self.farasapy_lemmatize(ret))
-        else:
-            raise Exception('Invalid lemmatizor')
+        ret = self.normalize(self.remove_punctuation(self.convert_emojis_to_meaning(self.tokens(self.dediac(text)))))
+        #
+        tot = self.remove_stopwords(ret)
+        tot += self.remove_stopwords(self.camel_lemmatize(self.tokenizer(ret)))
+        tot += self.remove_stopwords(self.farasapy_lemmatize(ret))
+        # tot += self.remove_stopwords(self.nltk_lemmatize(self.tokenizer(ret)))
+
+        return tot
+
+        # if self.LEMMATIZOR == 'camel':
+        #     return self.remove_stopwords(self.camel_lemmatize(self.tokenizer(ret)))
+        # elif self.LEMMATIZOR == 'farasapy':
+        #     return self.remove_stopwords(self.farasapy_lemmatize(ret))
+        # elif self.LEMMATIZOR == 'nltk':
+        #     return self.remove_stopwords(self.nltk_lemmatize(self.tokenizer(ret)))
+        # else:
+        #     raise Exception('Invalid lemmatizor')
 
 # open file
 
-# p = Preprocess()
-# x = '''
-# لقاح #فايزر/بيونتيك https://t.co/LHlDwaLhby,info_news,1
-
-# train   خبراء صحة صينيون يدعون إلى تعليق استخدام لقاح فايزر/بيونتيك"" و""موديرنا""",info_news,1
-
-# خبر جيد عن فعاليه لقاح فايزر/بيونتيك ضد التحولات الجينيه الجديده التي حدثت لفيروس كورونا وجعلته اكثر قدره على الانتشار وخصوصا الطفره الجديده التي تم رصدها والتي تغير اجزاء من البروتين الشوكي. <LF> https://t.co/cYcEAfcNp5,info_news,1
-
-# بعد وفيات النرويج.. خبراء صحة صينيون يدعون إلى تعليق استخدام لقاح “فايزر/بيونتيك” و”موديرنا” https://t.co/9whK0H6dTQ,info_news,-1
-
-# ثاني لقاح يحصل على ترخيص من وكالة الأدوية الأوروبية، بعد السماح باستخدام لقاح فايزر/بيونتيك في دول الاتحاد الـ27 https://t.co/EID7q81aMx #العربية,info_news,1"""
-# '''
+# p = Preprocess(LEMMATIZOR='nltk', INCLUDE_EMOJIS=False)
 # x = 'تساؤلات آخر ليل <LF>اذا ما كفانا لقاح الكورونا ...بزيدولو مي ؟؟ 😅<LF>#هبل'
-# print(p.do_all(x))
+# print('done', p.do_all(x))
 
 # f = open("output.txt", "w")
 # print("NATIVE:", p.farasapy_lemmatize('يُشار إلى أن اللغة العربية يتحدثها أكثر من 422 مليون نسمة ويتوزع متحدثوها في المنطقة المعروفة باسم الوطن العربي بالإضافة إلى العديد من المناطق الأخرى المجاورة مثل الأهواز وتركيا وتشاد والسنغال وإريتريا وغيرها. وهي اللغة الرابعة من لغات منظمة الأمم المتحدة الرسمية الست.'), file=f)

@@ -1,0 +1,180 @@
+BOW ONLY:
+  nb - camel - T - 2
+  CAT:
+  .45
+  .22
+
+  nb - camel - F - 5
+  CAT:
+  .44
+  .24
+
+  nb - farasa - F - 5
+  CAT:
+  .46
+  .25
+
+  nb - farasa - T - 5
+  CAT:
+  .46
+  .23
+
+  nb - farasa - T - 3
+  CAT:
+  .46
+  .23
+
+  nb - farasa - F - 10
+  CAT:
+  .46
+  .25
+
+  LR (weighted) - farasa - F - 5
+  CAT:
+  .59
+  .29
+
+  LR (balanced) - farasa - F - 5
+  CAT:
+  .55
+  .30
+
+  NB - farasa +dediac(camel) +original - F - 5
+  STANCE:
+  .65
+  .42
+
+  KNN k=5 - farasa +dediac(camel) +original - F - 5
+  STANCE:
+  .79
+  .40
+
+  LR balanced - farasa +dediac(camel) +original - F - 5
+  STANCE:
+  .77
+  .55
+
+  RIDGE - farasa +dediac(camel) +original - F - 5
+  STANCE:
+  .76
+  .50
+
+  RIDGE balanced - farasa +dediac(camel) +original - F - 5
+  STANCE:
+  .73
+  .48
+
+  RF balanced - farasa +dediac(camel) +original - F - 5
+  STANCE:
+  .80
+  .46
+
+  DT balanced - farasa +dediac(camel) +original - F - 5
+  STANCE:
+  .73
+  .50
+
+BOW + TFIDF:
+  LR (balanced) - farasa - F - 5
+  CAT:
+  .55
+  .29
+
+TFIDF: word[1, 3]:
+  LR custom - ALL - 5
+  CAT:
+  .34
+  .19
+
+TFIDF: char[2, 3] + word[1, 3]:
+  LSVM - ALL - F - 5
+  CAT:
+  .64
+  .30
+
+TFIDF: char[2, 3] + word[1, 3]:
+  LSVM - Farasa + original - F - 5
+  CAT:
+  .65
+  .30
+
+TFIDF: char[2, 3] + word[1, 3]:
+  LSVM - Farasa - F - 5
+  CAT:
+  .63
+  .30
+
+TFIDF: char[2, 3] + word[1, 3]:
+  LSVM - Farasa + dediac(camel) +original - F - 5
+  CAT:
+  .64
+  .33
+
+TFIDF: char[2, 3] + word[1, 3]:
+  LSVM (balanced) - Farasa + dediac(camel) +original - F - 5
+  CAT:
+  .57
+  .32
+  STANCE:
+  .79
+  .55
+
+TFIDF: char[2, 3] + word[1, 2]:
+  LSVM (balanced) - Farasa + dediac(camel) +original - F - 5
+  CAT:
+  .56
+  .32
+  STANCE:
+  .79
+  .54
+
+
+TFIDF: char[2, 3] + word[1, 2]:
+  NB - Farasa + dediac(camel) +original - F - 5
+  CAT:
+  .44
+  .24
+
+BOW:
+  LSVM (balanced) - Farasa + dediac(camel) +original - F - 5
+  CAT:
+  .55
+  .29
+  STANCE:
+  .76
+  .51
+
+BOW + TFIDF: char[2, 3] + word[1, 2]:
+  LSVM (balanced) - Farasa + dediac(camel) +original - F - 5
+  CAT:
+  STANCE:
+  .77
+  .52
+
+BOW + TFIDF: char[2, 3] + word[1, 3]:
+  LSVM (balanced) - Farasa + dediac(camel) +original - F - 5
+  CAT:
+  .54
+  .28
+  STANCE:
+
+
+TFIDF: char[2, 3] + word[1, 2]:
+  LR (balanced) - Farasa + dediac(camel) +original - F - 5
+  CAT:
+  .48
+  .30
+
+
+TFIDF: char[2, 3] + word[1, 3]:
+  SVM (balanced) - Farasa + dediac(camel) +original - F - 5
+  CAT:
+  .68
+  .25
+
+BOW + TFIDF: char[2, 3] + word[1, 3]:
+  LR (balanced) - Farasa + dediac(camel) +original - F - 5
+  STANCE:
+  .77
+  .54
+
