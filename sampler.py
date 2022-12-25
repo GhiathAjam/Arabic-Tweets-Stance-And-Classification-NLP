@@ -4,13 +4,19 @@ import pandas as pd
 import copy
 import csv
 
-def OverSampler():
+def OverSampler(drop_duplicate=True):
     # Read the train dataset
     t = pd.read_csv('./Dataset/train.csv')
     X=t['text']
     yc=t['category']
     ys=t['stance']
 
+    # Write duplicates into an external file to observe
+    t[X.duplicated()].to_csv('./Dataset/duplicates.csv')
+
+    # Remove all duplicates
+    if(drop_duplicate):
+        t.drop_duplicates(subset="text", keep=False, inplace=True)
 
     Xc_copy=copy.deepcopy(X)
     Xs_copy=copy.deepcopy(X)
@@ -64,3 +70,5 @@ def OverSampler():
     print("size before sampling = ",len(X))
     print("size after sampling classification =",len(Xc_resampled))
     print("size after sampling stance = ",len(Xs_resampled))
+
+OverSampler(drop_duplicate=True)

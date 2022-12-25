@@ -74,6 +74,16 @@ class BertClassifier(torch.nn.Module):
 
 ###########################
 
+def get_bert_embeddings(X, model_name='aubmindlab/bert-base-arabertv02-twitter'):
+  # instantiate train and validation datasets
+  dataset = AraBERTDataset(X, [], model_name)
+  extractor_model = AutoModel.from_pretrained(model_name)
+  output = extractor_model(input_ids=dataset.input_ids, attention_mask=dataset.attention_mask)
+  embeddings = output.pooler_output
+  return embeddings
+
+############################
+
 def train(model, train_dataset, val_dataset, criterion, optimizer, classes_names, n_classes=3, batch_size=16, epochs=30):
   """
   This function implements the training logic
@@ -143,10 +153,6 @@ def train(model, train_dataset, val_dataset, criterion, optimizer, classes_names
               acc = num_correct_predictions
               total_acc_train += acc
 
-              # move data to cpu then numpy so you can make use of sklearn metric functions
-              train_labels += list(train_label.to('cpu').detach().numpy())
-              train_preds += list(train_pred.to('cpu').detach().numpy())
-              
               if phase == 'train':
                   # zero your gradients
                   optimizer.zero_grad()
@@ -154,7 +160,11 @@ def train(model, train_dataset, val_dataset, criterion, optimizer, classes_names
                   batch_loss.backward()
                   # update the weights with your optimizer
                   optimizer.step()
-            
+              
+              # move data to cpu then numpy so you can make use of sklearn metric functions
+              train_labels += list(train_label.to('cpu').detach().numpy())
+              train_preds += list(train_pred.to('cpu').detach().numpy())
+              
           # calculate epoch's loss
           # len(train_dataset) will call the __len__ of the NERDataset
           # will return the number of sentences in the dataset
@@ -167,7 +177,11 @@ def train(model, train_dataset, val_dataset, criterion, optimizer, classes_names
           # calculate epoch's accuracy and loss
           epoch_loss = total_loss_train / sentences_count
           epoch_acc = total_acc_train / sentences_count
-          # calculate the classification report
-          report = metrics.classification_report(train_labels, train_preds, target_names=classes_names, digits=4)
-          print(f'Epochs: {epoch_num + 1} | {phase} Loss: {epoch_loss} | {phase} Accuracy: {epoch_acc}\n')
-          print(f'Classification Report: {report}\n')
+          report = metrics.classification_report(train_labels, train_preds, target_names=classes_names, digits=4, output_dict=True)
+          
+          print(f'Epochs: {epoch_num + 1} | {phase} Loss: {epoch_loss} | {phase} Accuracy: {epoch_acc} | {phase} macro avg persision: {report["macro avg"]}\n')
+          
+          if epoch_num % 5==0:
+            # calculate the classification report each 5 epochs
+            report = metrics.classification_report(train_labels, train_preds, target_names=classes_names, digits=4)
+            print(f'Classification Report: {report}\n')
