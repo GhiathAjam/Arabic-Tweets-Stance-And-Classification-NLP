@@ -3,6 +3,7 @@ import numpy as np
 import torch
 from transformers import AutoTokenizer, AutoModel
 from arabert.preprocess import ArabertPreprocessor
+from tqdm import tqdm
 
 class AraBERTDataset(torch.utils.data.Dataset):
     def __init__(self, x, y, model_name):
@@ -75,14 +76,21 @@ class BertClassifier(torch.nn.Module):
 
 ###########################
 
-def get_bert_embeddings(X, model_name='aubmindlab/bert-base-arabertv02-twitter'):
+
+def get_bert_embeddings(X,y, model_name='aubmindlab/bert-base-arabertv02-twitter'):
   arabert_prep = ArabertPreprocessor(model_name=model_name)
   X = X.apply(arabert_prep.preprocess)
   # instantiate train and validation datasets
-  dataset = AraBERTDataset(X, [], model_name)
+  dataset = AraBERTDataset(X, y, model_name)
+  dataloader = torch.utils.data.DataLoader(dataset=dataset, batch_size=16, shuffle=True)
   extractor_model = AutoModel.from_pretrained(model_name)
-  output = extractor_model(input_ids=dataset.input_ids, attention_mask=dataset.attention_mask)
-  embeddings = output.pooler_output
+  embeddings=[]
+  for input_id,mask,_ in tqdm(dataloader):
+    # extract embeddings of the batch
+    output = extractor_model(input_ids=input_id, attention_mask=mask)
+    embedding = output.pooler_output
+    # append batch embeddings to the total data embeddings
+    embeddings += embedding.tolist()
   return embeddings
 
 ############################

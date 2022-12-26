@@ -71,4 +71,4 @@ def OverSampler(drop_duplicate=True):
     print("size after sampling classification =",len(Xc_resampled))
     print("size after sampling stance = ",len(Xs_resampled))
 
-OverSampler(drop_duplicate=True)
+OverSampler(drop_duplicate=False)
