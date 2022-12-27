@@ -49,8 +49,8 @@ def RFmodel(Xtrain,y_train,X_test):
     y_pred=clf.predict(X=X_test)
     return y_pred
 
-def LRmodel(Xtrain,y_train,X_test):
-    clf=LogisticRegression(max_iter=300, class_weight='balanced')
+def LRmodel(Xtrain,y_train,X_test, class_weight='balanced'):
+    clf=LogisticRegression(max_iter=300, class_weight=class_weight)
     clf.fit(X=Xtrain,y=y_train)
     y_pred=clf.predict(X=X_test)
     return y_pred

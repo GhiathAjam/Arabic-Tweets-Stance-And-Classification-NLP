@@ -1,6 +1,6 @@
 nltk
 Arabic-Stopwords
-camel-tools 
+camel-tools==1.2.0
 farasapy
 arabert
 pandas
