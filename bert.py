@@ -3,6 +3,7 @@ import numpy as np
 import torch
 from transformers import AutoTokenizer, AutoModel
 from arabert.preprocess import ArabertPreprocessor
+from tqdm import tqdm
 
 class AraBERTDataset(torch.utils.data.Dataset):
     def __init__(self, x, y, model_name):
@@ -75,14 +76,21 @@ class BertClassifier(torch.nn.Module):
 
 ###########################
 
-def get_bert_embeddings(X, model_name='aubmindlab/bert-base-arabertv02-twitter'):
+
+def get_bert_embeddings(X,y, model_name='aubmindlab/bert-base-arabertv02-twitter'):
   arabert_prep = ArabertPreprocessor(model_name=model_name)
   X = X.apply(arabert_prep.preprocess)
   # instantiate train and validation datasets
-  dataset = AraBERTDataset(X, [], model_name)
+  dataset = AraBERTDataset(X, y, model_name)
+  dataloader = torch.utils.data.DataLoader(dataset=dataset, batch_size=16, shuffle=True)
   extractor_model = AutoModel.from_pretrained(model_name)
-  output = extractor_model(input_ids=dataset.input_ids, attention_mask=dataset.attention_mask)
-  embeddings = output.pooler_output
+  embeddings=[]
+  for input_id,mask,_ in tqdm(dataloader):
+    # extract embeddings of the batch
+    output = extractor_model(input_ids=input_id, attention_mask=mask)
+    embedding = output.pooler_output
+    # append batch embeddings to the total data embeddings
+    embeddings += embedding.tolist()
   return embeddings
 
 ############################
@@ -187,4 +195,40 @@ def train(model, train_dataset, val_dataset, criterion, optimizer, classes_names
           if epoch_num % 5==0:
             # calculate the classification report each 5 epochs
             report = metrics.classification_report(train_labels, train_preds, target_names=classes_names, digits=4)
-            print(f'Classification Report: {report}\n')
+            print(f'Classification Report:\n{report}\n')
+
+def predict(model, test_dataset, classes_names, batch_size=16):
+    #
+    test_dataloader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=True)
+    n_classes = len(classes_names)
+    # GPU configuration
+    use_cuda = torch.cuda.is_available()
+    device = torch.device("cuda" if use_cuda else "cpu")
+    if use_cuda:
+        model = model.cuda()
+        criterion = criterion.cuda()
+    #
+    model.eval()
+    test_preds = []
+    #
+    for test_input, test_attention_masks in test_dataloader:
+        # move data to the device
+        test_input = test_input.to(device)
+        test_attention_masks = test_attention_masks.to(device)
+        # do the forward pass
+        output = model(test_input, test_attention_masks)
+        # torch.Tensor.item(): Returns the testue of this tensor as a standard Python number. This only works for tensors with one element.
+        test_pred = torch.argmax(output, dim=-1)
+        #
+        test_preds += list(test_pred.to('cpu').detach().numpy())
+    # 
+    return test_preds
+
+def eval_only(model, val_dataset, criterion, classes_names, batch_size=16):
+    #
+    val_labels = val_dataset.labels
+    val_preds = predict(model, val_dataset, classes_names, batch_size)
+    # 
+    report = metrics.classification_report(val_labels, val_preds, target_names=classes_names, digits=4)
+    print(f'Classification Report:\n{report}\n')
+    return

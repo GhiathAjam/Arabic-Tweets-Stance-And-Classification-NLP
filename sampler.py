@@ -4,15 +4,16 @@ import pandas as pd
 import copy
 import csv
 
-def OverSampler(drop_duplicate=True):
+def OverSampler(drop_duplicate=True, write_csv=True, perfect_balance=True):
     # Read the train dataset
     t = pd.read_csv('./Dataset/train.csv')
     X=t['text']
     yc=t['category']
     ys=t['stance']
 
-    # Write duplicates into an external file to observe
-    t[X.duplicated()].to_csv('./Dataset/duplicates.csv')
+    if drop_duplicate:
+        # Write duplicates into an external file to observe
+        t[X.duplicated()].to_csv('./Dataset/duplicates.csv')
 
     # Remove all duplicates
     if(drop_duplicate):
@@ -25,7 +26,24 @@ def OverSampler(drop_duplicate=True):
     Xs_copy=Xs_copy.values.reshape(-1, 1)
 
     # Oversampling since the data we have is not abundant and is imbalanced
-    ros = RandomOverSampler(random_state=0,sampling_strategy='auto')
+    # When callable, function taking y and returns a dict. The keys correspond to the targeted classes.
+    # The values correspond to the desired number of samples for each class.
+    def strat(y):
+        # print(y)      # all values for all inputs
+        # print(len(y)) # 6988 ?!?!?!?!
+        # get count for each category
+        c = Counter(y)
+        # print(c)      # Counter({1: 100, 0:50, -1:10}
+        # scale each class to min(majority, 6 *original count)
+        ret = {k: min(4 *v, max(c.values())) for k, v in c.items()}
+        # print(ret)    # {1:100, 0:100, -1:60}
+        return ret
+
+    if perfect_balance:
+        ros = RandomOverSampler(random_state=0,sampling_strategy='auto')
+    else:
+        ros = RandomOverSampler(random_state=0, sampling_strategy=strat)
+
     Xc_resampled, yc_resampled = ros.fit_resample(Xc_copy, yc)
     Xs_resampled, ys_resampled = ros.fit_resample(Xs_copy, ys)
 
@@ -53,22 +71,22 @@ def OverSampler(drop_duplicate=True):
     classification_data = zip(Xc_resampled,yc_resampled)
     stance_data = zip(Xs_resampled,ys_resampled)
 
-
-    with open('./Dataset/classification_train_sample1.csv', "w",encoding="utf-8", newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow(('text','category'))
-        for row in classification_data:
-            writer.writerow(row)
-
-    with open('./Dataset/stance_train_sample1.csv', "w",encoding="utf-8", newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow(('text','stance'))
-        for row in stance_data:
-            writer.writerow(row)
+    if write_csv:
+        with open('./Dataset/cat_somesample.csv', "w",encoding="utf-8", newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(('text','category'))
+            for row in classification_data:
+                writer.writerow(row)
+        #
+        with open('./Dataset/stance_somesample.csv', "w",encoding="utf-8", newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(('text','stance'))
+            for row in stance_data:
+                writer.writerow(row)
 
 
     print("size before sampling = ",len(X))
     print("size after sampling classification =",len(Xc_resampled))
     print("size after sampling stance = ",len(Xs_resampled))
 
-OverSampler(drop_duplicate=True)
+# OverSampler(drop_duplicate=False, write_csv=True, perfect_balance=False)

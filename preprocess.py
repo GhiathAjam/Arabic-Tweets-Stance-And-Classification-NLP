@@ -30,12 +30,13 @@ class Preprocess:
     nltk_arb_stopwords = set(nltk.corpus.stopwords.words("arabic"))
     arabicstopwords = set(stp.stopwords_list())
 
-    def __init__(self, INCLUDE_EMOJIS=False, HASH_FREQ=5, LEMMATIZOR='farasapy') -> None:
-        print("Emojis: ", INCLUDE_EMOJIS)
-        print("Lemmatizor: ", LEMMATIZOR)
-        self.INCLUDE_EMOJIS = INCLUDE_EMOJIS
-        self.LEMMATIZOR = LEMMATIZOR
+    def __init__(self, EMOJIS='raw', HASH_FREQ=2, BERT=False) -> None:
+        print("Bert MODE", BERT)
+        print("Emojis: ", EMOJIS)
+        self.EMOJIS = EMOJIS
         self.HASH_FREQ = HASH_FREQ
+        self.BERT = BERT
+        #
         self.mle = MLEDisambiguator.pretrained()
         # Empty tokens as stop words
         self.STOPWORDS = self.arabicstopwords.union(['', ' '])
@@ -70,10 +71,12 @@ class Preprocess:
         # i.e 🌹 "red_flower" not "red flower"
         # add space before and after the emoji word, since usually emojis are written close to each other without spaces.
         # i.e. want 🔥🔥🔥 -> "fire fire fire" not "firefirefire"
-        if self.INCLUDE_EMOJIS:
+        if self.EMOJIS == 'text':
             return "".join([' <'+UNICODE_EMO[c]+'> ' if c in UNICODE_EMO else c for c in text])
-        else:
+        elif self.EMOJIS == 'none':
             return "".join([c if c not in UNICODE_EMO else ' ' for c in text])
+        else: # raw
+            return "".join([c if c not in UNICODE_EMO else ' '+c+' ' for c in text])
 
     # string -> remove punctuation
     def remove_punctuation(self, text):
@@ -124,7 +127,7 @@ class Preprocess:
         e2 = [item for sublist in e2 for item in sublist if item != '' and item != ' ']
         # remove # .. _ .. _ ..
         text = re.sub(r'#\S+', '', text)
-
+        #
         ret = camel_utils_tokenizer.simple_word_tokenize(text)
         # add extracted!
         ret += e1
@@ -137,7 +140,10 @@ class Preprocess:
     def camel_lemmatize(self, tokenized_text):
         disambig = self.mle.disambiguate(tokenized_text)
         lemmas = [d.analyses[0].analysis['lex'] for d in disambig]
-        return [self.dediac(l) for l in lemmas]
+        if self.BERT:
+            return ' '.join([self.dediac(l) for l in lemmas])
+        else:
+            return [self.dediac(l) for l in lemmas]
 
     def nltk_lemmatize(self, tokenized_text):
         si = ISRIStemmer()
@@ -147,14 +153,18 @@ class Preprocess:
     # This doesn't give same result as their API!
     def farasapy_lemmatize(self, text):
         # extract hashtags
-        hashtags = re.findall(r'#\S+', text)
+        hashtags = re.findall(r'#(\S+)', text)
         text = re.sub(r'#\S+', '', text)
         # extract < .. >
         tokens = re.findall(r'<\S+>', text)
         text = re.sub(r'<\S+>', '', text)
         #
-        ret = self.farasa_stm.stem(text)
-        return self.tokenizer(ret + ' '.join(tokens) + ' '.join(hashtags))
+        if self.BERT:
+            ret = self.farasa_stm.stem(text)
+            return (ret + ' '.join(tokens) + ' '.join(hashtags))
+        else:
+            ret = self.tokenizer(text)
+            return ret + tokens + hashtags
 
     # After lemmas?
     def remove_stopwords(self, tokenized_text):
@@ -169,29 +179,34 @@ class Preprocess:
     #    5. normalize
     #    6. tokenize & lemmatize
     #    7. remove stopwords
-    def do_all(self, text):
+    def do_all(self, text, debug=False):
         #
         ret = self.normalize(self.remove_punctuation(self.convert_emojis_to_meaning(self.tokens(self.dediac(text)))))
+        if debug:
+            print('0', ret)
         #
-        tot = self.remove_stopwords(ret)
-        tot += self.remove_stopwords(self.camel_lemmatize(self.tokenizer(ret)))
-        tot += self.remove_stopwords(self.farasapy_lemmatize(ret))
-        # tot += self.remove_stopwords(self.nltk_lemmatize(self.tokenizer(ret)))
-
-        return tot
-
-        # if self.LEMMATIZOR == 'camel':
-        #     return self.remove_stopwords(self.camel_lemmatize(self.tokenizer(ret)))
-        # elif self.LEMMATIZOR == 'farasapy':
-        #     return self.remove_stopwords(self.farasapy_lemmatize(ret))
-        # elif self.LEMMATIZOR == 'nltk':
-        #     return self.remove_stopwords(self.nltk_lemmatize(self.tokenizer(ret)))
-        # else:
-        #     raise Exception('Invalid lemmatizor')
+        if self.BERT:
+            tot = ret
+            tot += self.camel_lemmatize(self.tokenizer(ret))
+            tot += self.farasapy_lemmatize(ret)
+            return tot
+        else:
+            tot = self.tokenizer(ret)
+            if debug:
+                print('1', tot)
+            tot += self.camel_lemmatize(self.tokenizer(ret))
+            if debug:
+                print('2', self.camel_lemmatize(self.tokenizer(ret)))
+            tot += self.farasapy_lemmatize(ret)
+            if debug:
+                print('3', self.farasapy_lemmatize(ret))
+            return self.remove_stopwords(tot)
 
 # open file
 
-# p = Preprocess(LEMMATIZOR='nltk', INCLUDE_EMOJIS=False)
+# p = Preprocess(EMOJIS='raw')
+# # p = Preprocess(EMOJIS='text')
+# p = Preprocess(EMOJIS='none')
 # x = 'تساؤلات آخر ليل <LF>اذا ما كفانا لقاح الكورونا ...بزيدولو مي ؟؟ 😅<LF>#هبل'
 # print('done', p.do_all(x))
 
@@ -210,4 +225,5 @@ class Preprocess:
 
 # print(p.convert_emojis_to_meaning("😂😶😶🤔❤👍🏻😁"));
 # print("empty test");
+
 

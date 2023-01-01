@@ -9,16 +9,16 @@ stance_classes = {'Neutral': 0,
                     'Negative': 2,
                     }
 
-category_classes = {'info_news': 1, 
-                    'celebrity': 2,
-                    'plan': 3,
-                    'requests': 4,
-                    'rumors': 5,
-                    'advice': 6,
-                    'restrictions': 7,
-                    'personal': 8,
-                    'unrelated': 9,
-                    'others': 10}
+category_classes = {'info_news': 0, 
+                    'celebrity': 1,
+                    'plan': 2,
+                    'requests': 3,
+                    'rumors': 4,
+                    'advice': 5,
+                    'restrictions': 6,
+                    'personal': 7,
+                    'unrelated': 8,
+                    'others': 9}
 EMO_UNICODE = {
     u':1st_place_medal:': u'\U0001F947',
     u':2nd_place_medal:': u'\U0001F948',
