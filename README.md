@@ -100,13 +100,15 @@ Data | Features | Classifier Model | Acc | F1
 Oversampled data | Embedding Layer | 3-layer LSTM + 1 NN layer | 56.6 | 25.9
 ---
 ### AraBert (Transformers)
+
 <p align="middle">
   <img src="https://github.com/aub-mind/arabert/blob/master/arabert_logo.png" width="150" align="left"/>
   <img src="https://github.com/aub-mind/arabert/blob/master/AraGPT2.png" width="150"/>
   <img src="https://github.com/aub-mind/arabert/blob/master/AraELECTRA.png" width="150" align="right"/>
 </p>
-In the transformers family, we’ve fine-tuned an arabic bert model on our dataset. 
-* The arabic bert used was aubmindlab/bert-base-arabertv02-twitter from hugging face. We’ve chosen this model because it was trained on ~60 Million Arabic tweets. 
+
+In the transformers family, we’ve fine-tuned an arabic bert model on our dataset.
+* The arabic bert used was aubmindlab/bert-base-arabertv02-twitter from hugging face. We’ve chosen this model because it was trained on ~60 Million Arabic tweets.
 * As per the documentation, we’ve used the preprocessing and tokenizer that was used when the model authors built their model.
 Fine-tuning:
 * We use the araBert as a feature extractor, by first freezing the bert’s parameters, then passing the data through this arabert model, and producing the embedding as output. The sentence embedding is calculated by taking the last layer hidden-state of the first token of the sequence [CLS token].
@@ -116,7 +118,7 @@ Fine-tuning:
    Epochs | Batch Size | Learnign rate
    --- | --- | ---
    50 | 16 | 0.001
-* Arabert embeddings with SVM classifier ->
+* Arabert embeddings with SVM classifier:
 
    Extract sentences’ embeddings using arabert, then train these embeddings using a linear-kernel SVM.
 ---
@@ -136,7 +138,6 @@ Fine-tuning:
 ![12](./deliverables/Presentation/12.jpg "12")
 
 -->
----
 ### Libraries Used
 + nltk
 + Arabic-Stopwords
