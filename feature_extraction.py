@@ -6,7 +6,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from gensim.models import Word2Vec
 
 
-def TFIDF(train_documents,test_documents):
+def TFIDF(X_train, X_test, typ='word', n1=None, n2=None):
     '''
     inputs:
         documents: this is a list of documents where each document is a list of preprcessed tokens
@@ -16,11 +16,23 @@ def TFIDF(train_documents,test_documents):
                   this is a list of features of each document, so features[0] is the features of doc1
                   which is the tfidf of this document  for each word in the vocabulary.
     '''
-    vectorizer =TfidfVectorizer(analyzer=lambda x: x)
-    train_features= vectorizer.fit_transform(train_documents)
-    test_features=vectorizer.transform(raw_documents=test_documents)
+    if typ == 'word':
+        if n1 is None or n2 is None:
+            n1, n2 = 1, 2
+        vectorizer = TfidfVectorizer(token_pattern=r'\S+', lowercase=False, tokenizer=lambda x: x, ngram_range=(n1, n2))
+    elif typ == 'char':
+        if n1 is None or n2 is None:
+            n1, n2 = 2, 3
+        vectorizer =TfidfVectorizer(analyzer='char', ngram_range=(n1, n2))
+    #
+    xtrain= [" ".join(doc) for doc in X_train]
+    xtest= [" ".join(doc) for doc in X_test]
+    train_features= vectorizer.fit_transform(xtrain)
+    test_features=vectorizer.transform(raw_documents=xtest)
+    #
     return train_features.toarray(), test_features.toarray()
     
+# print(TFIDF([['a','b','c'],['a','b','c','d']], [['a','b','c'],['a','b','c','d']], typ='word', n1=1, n2=2))
 
 
 def BOW(train_documents,test_documents):
