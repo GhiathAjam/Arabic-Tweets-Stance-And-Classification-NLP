@@ -44,12 +44,12 @@ We used `regex`, [`camel-tools`](https://github.com/CAMeL-Lab/camel_tools), [`fa
 5. Named entity recognition. (NER)
 ---
 ## Feature Extraction
-* **Bag of words (BOW)**
-* **Continuous BOW (word embeddings / vectors)**
-* **Skip-gram (word embeddings / vectors)**
-* **TF-IDF**
+* Bag of words (BOW)
+* TF-IDF
    * We used both Word `n-grams` and Character `n-grams`.
-* **Arabert Embeddings as a feature for SVM**
+* Continuous BOW Word2Vec
+* Skip-gram Word2Vec
+* Arabert Embeddings as a feature for SVM
    * We took the `pooler output` from Bert, which resemble embeddings and feed them to SVM as a feature.
 ---
 
