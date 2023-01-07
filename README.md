@@ -94,11 +94,7 @@ Oversampled data | Embedding Layer | 3-layer LSTM + 1 NN layer | 56.6 | 25.9
 ### AraBert (Transformers)
 [source](https://github.com/aub-mind/arabert)
 
-<p align="middle">
-  <img src="https://github.com/aub-mind/arabert/blob/master/arabert_logo.png" width="150" align="left"/>
-  <img src="https://github.com/aub-mind/arabert/blob/master/AraGPT2.png" width="150"/>
-  <img src="https://github.com/aub-mind/arabert/blob/master/AraELECTRA.png" width="150" align="right"/>
-</p>
+<img src="https://github.com/aub-mind/arabert/blob/master/arabert_logo.png" width="150" align="middle"/>
 
 In the transformers family, we’ve fine-tuned an Arabic bert model on our dataset.
 * The arabic bert used was aubmindlab/bert-base-arabertv02-twitter from hugging face. We’ve chosen this model because it was trained on ~60 Million Arabic tweets.
