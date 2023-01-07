@@ -10,7 +10,7 @@ NLP Python code that calculates stance and classifies Arabic tweets about COVID-
 ## Pipeline
 ![2](./deliverables/Presentation/02.jpg "2")
 ---
-## Data Cleaning
+## Data
 ![4](./deliverables/Presentation/04.jpg "4")
 
 ### Data Balancing
@@ -18,22 +18,23 @@ Problem was un-avoidable as unlike 'accuracy', 'macro f1' score will just collap
 We implemented two approaches:
 1. **Oversampling**
 
-   More samples for minoriy classes, using `class_weight='balanced'` in `scikit-learn` classifiers.
+   More samples for minoriy classes, using `class_weight='balanced'` in [`scikit-learn`](https://scikit-learn.org/) classifiers.
 2. **Penalizing mistakes**
 
-   Higher penalty for minority classses, using `imblearn`.
+   Higher penalty for minority classses, using [`imblearn`](https://pypi.org/project/imblearn/).
 
 ### Data preprocessing:
+We used `regex`, [`camel-tools`](https://github.com/CAMeL-Lab/camel_tools), [`farasapy`](https://github.com/MagedSaeed/farasapy), [`Arabic-Stopwords`](https://pypi.org/project/Arabic-Stopwords) and [`nltk`](https://github.com/nltk/nltk)
 1. Removing Diacritization (التشكيل) and punctuation.
 2. Replacing links, numbers and mentions with <link>, <num> and <mt>.
 3. Converting emojis to equivalent text. (😂 -> face_tearing_with_joy)
-4. Normalizing letters. (أ إ آ  -> اا)
-5. Lemmatization using multiple tools. (camel, farasa, nltk stem)
+4. Normalizing letters. `أ إ آ  -> ا`
+5. Lemmatization using multiple tools.
 6. Converting English text to lowercase.
-7. Repeating hashtag words n times.
-8. Removing stopwords. (combined nltk and Arabic-Stopwords) e.g. 'وأيها' , 'عندنا' , 'معي'.
+7. Repeating hashtag words `n` times.
+8. Removing stopwords. (combined `nltk` and `Arabic-Stopwords`) e.g. 'وأيها' , 'عندنا' , 'معي'.
 9. Removing duplicate rows.
-10. Tokenization using camel-tools simple word tokenizer.
+10. Tokenization using `camel-tools` simple word tokenizer.
 
 #### Additional Ideas:
 1. Translate English text.
@@ -44,21 +45,12 @@ We implemented two approaches:
 ---
 ## Feature Extraction
 * **Bag of words (BOW)**
-   * Simplified representation of data, where we don’t care about the context but only about what words occurred in what tweets and by how much.
-   * The feature is a matrix |Vocab| * |tweet | -> cell[word, tweet] == count(word in tweet).
 * **Continuous BOW (word embeddings / vectors)**
-   * Word2Vec model where a word is predicted based on surrounding words, a 3-layer NN is chosen and trained using a huge corpora.
-   * The embeddings for each word is the weights between the input layer and the hidden layer.
 * **Skip-gram (word embeddings / vectors)**
-   * Word2Vec model where surrounding words are predicted based on current word, a 3-layer NN is chosen and trained using huge corpora.
-   * The embeddings for each word is the weights between the input layer and the hidden layer.
 * **TF-IDF**
-   * Term Frequency-Inverse Document Frequency.
-   * TF(w, tweet) = count(w in tweet), this eliminates very rare words.
-   * IDF(w) = #tweets / #(tweets with the word w), this eliminates too frequent words.
-   * We used both Word n-grams and Character n-grams.
+   * We used both Word `n-grams` and Character `n-grams`.
 * **Arabert Embeddings as a feature for SVM**
-   * We took the “pooler output” from Bert, which resemble embeddings and feed them to SVM as a feature
+   * We took the `pooler output` from Bert, which resemble embeddings and feed them to SVM as a feature.
 ---
 
 ## Models
@@ -100,6 +92,7 @@ Data | Features | Classifier Model | Acc | F1
 Oversampled data | Embedding Layer | 3-layer LSTM + 1 NN layer | 56.6 | 25.9
 ---
 ### AraBert (Transformers)
+[source](https://github.com/aub-mind/arabert)
 
 <p align="middle">
   <img src="https://github.com/aub-mind/arabert/blob/master/arabert_logo.png" width="150" align="left"/>
@@ -107,11 +100,11 @@ Oversampled data | Embedding Layer | 3-layer LSTM + 1 NN layer | 56.6 | 25.9
   <img src="https://github.com/aub-mind/arabert/blob/master/AraELECTRA.png" width="150" align="right"/>
 </p>
 
-In the transformers family, we’ve fine-tuned an arabic bert model on our dataset.
+In the transformers family, we’ve fine-tuned an Arabic bert model on our dataset.
 * The arabic bert used was aubmindlab/bert-base-arabertv02-twitter from hugging face. We’ve chosen this model because it was trained on ~60 Million Arabic tweets.
 * As per the documentation, we’ve used the preprocessing and tokenizer that was used when the model authors built their model.
 Fine-tuning:
-* We use the araBert as a feature extractor, by first freezing the bert’s parameters, then passing the data through this arabert model, and producing the embedding as output. The sentence embedding is calculated by taking the last layer hidden-state of the first token of the sequence [CLS token].
+* We use the AraBert as a feature extractor, by first freezing the bert’s parameters, then passing the data through this arabert model, and producing the embedding as output. The sentence embedding is calculated by taking the last layer hidden-state of the first token of the sequence `CLS token`.
 * Then the sentence embeddings enters a classifier head we’ve built. The classifier head consists of 2 neural network layers in order to fine tune the weights of the model on our data.
 * Arabert Training Settings:
 
@@ -139,16 +132,16 @@ Fine-tuning:
 
 -->
 ### Libraries Used
-+ nltk
-+ Arabic-Stopwords
-+ camel-tools==1.2.0
-+ farasapy
-+ arabert
-+ pandas
-+ scikit-learn
-+ gensim
-+ Transformers
-+ imblearn
++ `nltk`
++ `Arabic-Stopwords`
++ `camel-tools==1.2.0`
++ `farasapy`
++ `arabert`
++ `pandas`
++ `scikit-learn`
++ `gensim`
++ `Transformers`
++ `imblearn`
 ---
-## الحمدلله
+## تم بحمدالله
 ![14](./deliverables/Presentation/14.jpg "14")
