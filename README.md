@@ -7,10 +7,18 @@ NLP Python code that calculates stance and classifies Arabic tweets about COVID-
 
 ![1](./deliverables/Presentation/01.jpg "1")
 ---
+### Table of contents
+1. [Pipeline](#pipeline)
+2. [Data Analysis / Cleaning](#data-analysis--cleaning)
+3. [Feature Extraction](#feature-extraction)
+4. [Models](#models)
+5. [Contributors](#contributors)
+
+
 ## Pipeline
 ![2](./deliverables/Presentation/02.jpg "2")
 ---
-## Data
+## Data Analysis / Cleaning
 ![4](./deliverables/Presentation/04.jpg "4")
 
 ### Data Balancing
@@ -141,3 +149,35 @@ Fine-tuning:
 ---
 ## تم بحمدالله
 ![14](./deliverables/Presentation/14.jpg "14")
+   
+
+   
+## Contributors
+<table align="center">
+  <tr>
+    <td align="center">
+    <a href="https://github.com/GhiathAjam" target="_black">
+    <img src="https://avatars.githubusercontent.com/u/43111805?v=4" width="100px;" alt="Gheiath Ajam"/>
+    <br />
+    <sub><b>غياث عجم</b></sub></a>
+    </td>
+    <td align="center">
+    <a href="https://github.com/NouranHany" target="_black">
+    <img src="https://avatars.githubusercontent.com/u/59095993?v=4" width="100px;" alt="Noran Hany"/>
+    <br />
+    <sub><b>Noran Hany</b></sub></a>
+    </td>
+    <td align="center">
+    <a href="https://github.com/Halahamdy22" target="_black">
+    <img src="https://avatars.githubusercontent.com/u/56937106?v=4" width="100px;" alt="Hala Hamdy"/>
+    <br />
+    <sub><b>Hala Hamdy</b></sub></a>
+    </td>
+    <td align="center">
+    <a href="https://github.com/reem-atalah/" target="_black">
+    <img src="https://avatars.githubusercontent.com/u/55799245?v=4" width="100px;" alt="Reem Attallah"/>
+    <br />
+    <sub><b>Reem Attallah</b></sub></a>
+    </td>
+  </tr>
+ </table>
